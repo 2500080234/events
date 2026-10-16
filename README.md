@@ -1,5 +1,7 @@
 # CampusConnect - College Event Management System
 
+**Live demo:** https://2500080234.github.io/events/
+
 A lightweight front-end web app for managing college events. Students browse and register for events; organisers add events and review registrations.
 
 Built with plain HTML, CSS and JavaScript. No build step, no dependencies.
