@@ -1,4 +1,4 @@
-# CampusConnect - College Event Management System
+# College Event Management System
 
 **Live demo:** https://2500080234.github.io/events/
 
