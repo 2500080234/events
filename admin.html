@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Admin | CampusConnect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#14213d;--muted:#5b6478;--paper:#f6f8fc;--card:#fff;--line:#dfe4ee;--brand:#2447d8;--brand-d:#1a35a8;--amber:#f2a33a;--ok:#1e8e5a;--bad:#c73e3e;--r:10px}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.55 "Public Sans",system-ui,sans-serif;color:var(--ink);background:var(--paper)}
+h1,h2{font-family:"Bricolage Grotesque","Public Sans",system-ui,sans-serif;line-height:1.15;margin:0}
+a{color:inherit}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+header{background:var(--card);border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;justify-content:space-between;height:64px}
+.brand{font:700 20px "Bricolage Grotesque",sans-serif;text-decoration:none}
+nav a{margin-left:20px;text-decoration:none;color:var(--muted);font-weight:500}
+nav a:hover,nav a[aria-current]{color:var(--ink)}
+.btn{padding:10px 18px;border-radius:var(--r);border:1px solid var(--brand);background:var(--brand);color:#fff;font:600 15px "Public Sans",sans-serif;cursor:pointer}
+.btn:hover{background:var(--brand-d)}
+.btn.ghost{background:transparent;color:var(--brand)}
+.btn.sm{padding:6px 12px;font-size:13px}
+.btn.danger{background:transparent;border-color:var(--bad);color:var(--bad)}
+.btn.danger:hover{background:var(--bad);color:#fff}
+:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+main{padding:40px 0 72px}
+main h1{font-size:36px;margin-bottom:24px}
+h2{font-size:22px;margin-bottom:14px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px}
+.stat{background:var(--card);border:1px solid var(--line);border-left:4px solid var(--amber);border-radius:var(--r);padding:16px 18px}
+.stat b{display:block;font:700 30px/1.1 "Bricolage Grotesque",sans-serif}
+.stat span{color:var(--muted);font-size:14px}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:22px;margin-bottom:28px}
+form.add{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px}
+form.add .full{grid-column:1/-1}
+label{display:block;font-weight:600;font-size:14px;margin-bottom:4px}
+input,select,textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r);background:#fff;color:var(--ink);width:100%}
+.err{color:var(--bad);font-size:14px;min-height:20px}
+.table{overflow-x:auto}
+table{width:100%;border-collapse:collapse;min-width:640px}
+th,td{text-align:left;padding:12px 10px;border-bottom:1px solid var(--line);font-size:15px}
+th{color:var(--muted);font-weight:600;font-size:14px}
+td.act{white-space:nowrap;text-align:right}td.act .btn{margin-left:6px}
+.empty{text-align:center;color:var(--muted);padding:28px 0}
+dialog{border:0;border-radius:14px;padding:26px;width:min(560px,94vw);box-shadow:0 20px 60px rgba(20,33,61,.3)}
+dialog::backdrop{background:rgba(20,33,61,.5)}
+dialog .actions{text-align:right;margin-top:18px}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 20px;border-radius:var(--r);opacity:0;pointer-events:none;transition:opacity .2s}
+#toast.show{opacity:1}
+footer{border-top:1px solid var(--line);padding:24px 0;color:var(--muted);font-size:14px}
+@media(max-width:640px){.stats{grid-template-columns:1fr}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap bar">
+    <a class="brand" href="index.html">CampusConnect</a>
+    <nav aria-label="Main"><a href="index.html">Home</a><a href="user.html">Events</a><a href="admin.html" aria-current="page">Admin</a></nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <h1>Event dashboard</h1>
+  <div class="stats">
+    <div class="stat"><b id="sEvents">0</b><span>Events</span></div>
+    <div class="stat"><b id="sRegs">0</b><span>Registrations</span></div>
+    <div class="stat"><b id="sSeats">0</b><span>Seats still open</span></div>
+  </div>
+
+  <section class="panel">
+    <h2>Add an event</h2>
+    <form class="add" id="addForm" novalidate>
+      <div><label for="title">Title</label><input id="title" required></div>
+      <div><label for="date">Date</label><input id="date" type="date" required></div>
+      <div><label for="venue">Venue</label><input id="venue" required></div>
+      <div><label for="category">Category</label>
+        <select id="category"><option>Technical</option><option>Cultural</option><option>Sports</option><option>Career</option><option>Workshop</option></select></div>
+      <div><label for="seats">Seats</label><input id="seats" type="number" min="1" value="100" required></div>
+      <div class="full"><label for="desc">Description</label><textarea id="desc" rows="2"></textarea></div>
+      <div class="full"><div class="err" id="err" role="alert"></div><button class="btn" type="submit">Add event</button></div>
+    </form>
+  </section>
+
+  <section class="panel">
+    <h2>All events</h2>
+    <div class="table"><table>
+      <thead><tr><th>Event</th><th>Date</th><th>Venue</th><th>Registered</th><th><span class="sr" hidden>Actions</span></th></tr></thead>
+      <tbody id="rows"></tbody>
+    </table></div>
+  </section>
+</main>
+
+<dialog id="dlg">
+  <h2 id="dlgTitle"></h2>
+  <div class="table"><table><thead><tr><th>Name</th><th>Roll no.</th><th>Email</th></tr></thead><tbody id="dlgRows"></tbody></table></div>
+  <div class="actions"><button class="btn ghost" id="close">Close</button></div>
+</dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+<footer><div class="wrap">&copy; 2026 CampusConnect &ndash; College Event Management System</div></footer>
+
+<script>
+/* ---- Shared data layer (same in index, user, admin) ---- */
+const DB={
+  get(k,d){try{return JSON.parse(localStorage.getItem('cems.'+k))??d}catch{return d}},
+  set(k,v){localStorage.setItem('cems.'+k,JSON.stringify(v))}
+};
+const SEED=[
+  {id:'e1',title:'Tech Fest 2026',date:'2026-11-07',venue:'Main Auditorium',category:'Technical',seats:200,desc:'Hackathon, robotics demos and guest talks.'},
+  {id:'e2',title:'Cultural Night',date:'2026-11-21',venue:'Open Air Theatre',category:'Cultural',seats:500,desc:'Music, dance and drama by student clubs.'},
+  {id:'e3',title:'Inter-College Sports Meet',date:'2026-12-05',venue:'College Ground',category:'Sports',seats:300,desc:'Athletics, cricket and volleyball.'},
+  {id:'e4',title:'Career Fair',date:'2026-12-12',venue:'Seminar Hall',category:'Career',seats:150,desc:'Meet recruiters and attend résumé clinics.'}
+];
+const events=()=>{let e=DB.get('events');if(!e){e=SEED;DB.set('events',e)}return e};
+const regs=()=>DB.get('regs',[]);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt=d=>new Date(d+'T00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short',year:'numeric'});
+
+/* ---- Page logic ---- */
+const $=id=>document.getElementById(id);
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)}
+
+function render(){
+  const ev=events().slice().sort((a,b)=>a.date.localeCompare(b.date)), r=regs();
+  $('sEvents').textContent=ev.length;
+  $('sRegs').textContent=r.length;
+  $('sSeats').textContent=ev.reduce((n,e)=>n+Math.max(0,e.seats-r.filter(x=>x.eventId===e.id).length),0);
+  $('rows').innerHTML=ev.map(e=>{
+    const n=r.filter(x=>x.eventId===e.id).length;
+    return `<tr><td><strong>${esc(e.title)}</strong><br><span class="meta" style="color:var(--muted);font-size:13px">${esc(e.category)}</span></td>
+      <td>${fmt(e.date)}</td><td>${esc(e.venue)}</td><td>${n} / ${e.seats}</td>
+      <td class="act"><button class="btn ghost sm" data-view="${e.id}">View list</button><button class="btn danger sm" data-del="${e.id}">Delete</button></td></tr>`
+  }).join('')||'<tr><td colspan="5" class="empty">No events yet. Add your first event above.</td></tr>';
+}
+
+$('addForm').addEventListener('submit',e=>{
+  e.preventDefault();
+  const ev={id:'e'+Date.now(),title:$('title').value.trim(),date:$('date').value,venue:$('venue').value.trim(),
+            category:$('category').value,seats:parseInt($('seats').value,10),desc:$('desc').value.trim()};
+  if(!ev.title||!ev.date||!ev.venue||!(ev.seats>0)){$('err').textContent='Fill in title, date, venue and a seat count above 0.';return}
+  $('err').textContent='';
+  DB.set('events',[...events(),ev]);
+  e.target.reset(); $('seats').value=100; render(); toast('Event added');
+});
+
+$('rows').addEventListener('click',e=>{
+  const v=e.target.closest('[data-view]'), d=e.target.closest('[data-del]');
+  if(v){
+    const ev=events().find(x=>x.id===v.dataset.view), list=regs().filter(x=>x.eventId===ev.id);
+    $('dlgTitle').textContent=ev.title+' – registrations';
+    $('dlgRows').innerHTML=list.map(x=>`<tr><td>${esc(x.name)}</td><td>${esc(x.roll)}</td><td>${esc(x.email)}</td></tr>`).join('')
+      ||'<tr><td colspan="3" class="empty">No one has registered yet.</td></tr>';
+    $('dlg').showModal();
+  }
+  if(d&&confirm('Delete this event and all its registrations?')){
+    DB.set('events',events().filter(x=>x.id!==d.dataset.del));
+    DB.set('regs',regs().filter(x=>x.eventId!==d.dataset.del));
+    render(); toast('Event deleted');
+  }
+});
+$('close').addEventListener('click',()=>$('dlg').close());
+render();
+</script>
+</body>
+</html>

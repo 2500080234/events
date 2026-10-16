@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Events | CampusConnect</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#14213d;--muted:#5b6478;--paper:#f6f8fc;--card:#fff;--line:#dfe4ee;--brand:#2447d8;--brand-d:#1a35a8;--amber:#f2a33a;--ok:#1e8e5a;--bad:#c73e3e;--r:10px}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.55 "Public Sans",system-ui,sans-serif;color:var(--ink);background:var(--paper)}
+h1,h2,h3{font-family:"Bricolage Grotesque","Public Sans",system-ui,sans-serif;line-height:1.15;margin:0}
+a{color:inherit}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+header{background:var(--card);border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;justify-content:space-between;height:64px}
+.brand{font:700 20px "Bricolage Grotesque",sans-serif;text-decoration:none}
+nav a{margin-left:20px;text-decoration:none;color:var(--muted);font-weight:500}
+nav a:hover,nav a[aria-current]{color:var(--ink)}
+.btn{padding:10px 18px;border-radius:var(--r);border:1px solid var(--brand);background:var(--brand);color:#fff;font:600 15px "Public Sans",sans-serif;cursor:pointer}
+.btn:hover{background:var(--brand-d)}
+.btn.ghost{background:transparent;color:var(--brand)}
+.btn:disabled{background:#c9cfdd;border-color:#c9cfdd;cursor:not-allowed}
+:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.ticket{display:grid;grid-template-columns:84px 1fr;background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.stub{background:var(--ink);color:#fff;text-align:center;padding:16px 6px;border-right:2px dashed var(--amber)}
+.stub b{display:block;font:700 30px/1 "Bricolage Grotesque",sans-serif}
+.stub span{font-size:13px;opacity:.85}
+.body{padding:16px 18px;display:flex;flex-direction:column;gap:6px}
+.body h3{font-size:19px}
+.meta{color:var(--muted);font-size:14px}
+.foot{display:flex;align-items:center;justify-content:space-between;margin-top:8px;gap:8px}
+.left{font-size:13px;font-weight:600;color:var(--ok)}.left.low{color:var(--bad)}
+main{padding:40px 0 72px}
+main h1{font-size:36px;margin-bottom:6px}
+.filters{display:flex;gap:12px;flex-wrap:wrap;margin:24px 0}
+input,select,textarea{font:inherit;padding:10px 12px;border:1px solid var(--line);border-radius:var(--r);background:#fff;color:var(--ink);width:100%}
+.filters input{flex:1 1 240px;width:auto}.filters select{width:auto}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px}
+dialog{border:0;border-radius:14px;padding:26px;width:min(420px,92vw);box-shadow:0 20px 60px rgba(20,33,61,.3)}
+dialog::backdrop{background:rgba(20,33,61,.5)}
+dialog h2{font-size:24px;margin-bottom:4px}
+label{display:block;font-weight:600;font-size:14px;margin-top:14px;margin-bottom:4px}
+.actions{display:flex;justify-content:flex-end;gap:10px;margin-top:22px}
+.err{color:var(--bad);font-size:14px;min-height:20px;margin-top:10px}
+#toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:12px 20px;border-radius:var(--r);opacity:0;pointer-events:none;transition:opacity .2s}
+#toast.show{opacity:1}
+.empty{grid-column:1/-1;text-align:center;color:var(--muted);padding:48px 0}
+footer{border-top:1px solid var(--line);padding:24px 0;color:var(--muted);font-size:14px}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap bar">
+    <a class="brand" href="index.html">CampusConnect</a>
+    <nav aria-label="Main"><a href="index.html">Home</a><a href="user.html" aria-current="page">Events</a><a href="admin.html">Admin</a></nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <h1>Upcoming events</h1>
+  <p class="meta">Pick an event and register with your college details.</p>
+  <div class="filters">
+    <input id="q" type="search" placeholder="Search by title or venue" aria-label="Search events">
+    <select id="cat" aria-label="Filter by category"><option value="">All categories</option></select>
+  </div>
+  <div class="grid" id="grid"></div>
+</main>
+
+<dialog id="dlg">
+  <form id="form" method="dialog" novalidate>
+    <h2>Register</h2>
+    <p class="meta" id="dlgEvent"></p>
+    <label for="name">Full name</label><input id="name" required autocomplete="name">
+    <label for="roll">Roll number</label><input id="roll" required>
+    <label for="email">College email</label><input id="email" type="email" required autocomplete="email">
+    <div class="err" id="err" role="alert"></div>
+    <div class="actions">
+      <button class="btn ghost" type="button" id="cancel">Cancel</button>
+      <button class="btn" type="submit">Confirm registration</button>
+    </div>
+  </form>
+</dialog>
+<div id="toast" role="status" aria-live="polite"></div>
+<footer><div class="wrap">&copy; 2026 CampusConnect &ndash; College Event Management System</div></footer>
+
+<script>
+/* ---- Shared data layer (same in index, user, admin) ---- */
+const DB={
+  get(k,d){try{return JSON.parse(localStorage.getItem('cems.'+k))??d}catch{return d}},
+  set(k,v){localStorage.setItem('cems.'+k,JSON.stringify(v))}
+};
+const SEED=[
+  {id:'e1',title:'Tech Fest 2026',date:'2026-11-07',venue:'Main Auditorium',category:'Technical',seats:200,desc:'Hackathon, robotics demos and guest talks.'},
+  {id:'e2',title:'Cultural Night',date:'2026-11-21',venue:'Open Air Theatre',category:'Cultural',seats:500,desc:'Music, dance and drama by student clubs.'},
+  {id:'e3',title:'Inter-College Sports Meet',date:'2026-12-05',venue:'College Ground',category:'Sports',seats:300,desc:'Athletics, cricket and volleyball.'},
+  {id:'e4',title:'Career Fair',date:'2026-12-12',venue:'Seminar Hall',category:'Career',seats:150,desc:'Meet recruiters and attend résumé clinics.'}
+];
+const events=()=>{let e=DB.get('events');if(!e){e=SEED;DB.set('events',e)}return e};
+const regs=()=>DB.get('regs',[]);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const parts=d=>{const t=new Date(d+'T00:00');return{m:t.toLocaleString('en-IN',{month:'short'}),d:t.getDate()}};
+
+/* ---- Page logic ---- */
+const $=id=>document.getElementById(id);
+const today=new Date().toISOString().slice(0,10);
+let current=null;
+
+function toast(msg){const t=$('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2800)}
+
+function render(){
+  const q=$('q').value.trim().toLowerCase(), c=$('cat').value, r=regs();
+  const list=events().filter(e=>e.date>=today)
+    .filter(e=>!c||e.category===c)
+    .filter(e=>!q||(e.title+e.venue).toLowerCase().includes(q))
+    .sort((a,b)=>a.date.localeCompare(b.date));
+  $('grid').innerHTML=list.map(e=>{
+    const left=e.seats-r.filter(x=>x.eventId===e.id).length, p=parts(e.date);
+    return `<article class="ticket">
+      <div class="stub"><b>${p.d}</b><span>${p.m}</span></div>
+      <div class="body">
+        <h3>${esc(e.title)}</h3>
+        <div class="meta">${esc(e.venue)} &bull; ${esc(e.category)}</div>
+        <div class="meta">${esc(e.desc||'')}</div>
+        <div class="foot">
+          <span class="left ${left<=10?'low':''}">${left>0?left+' seats left':'Fully booked'}</span>
+          <button class="btn" data-id="${e.id}" ${left<=0?'disabled':''}>Register</button>
+        </div>
+      </div></article>`}).join('')||'<p class="empty">No events match your search. Try a different keyword or category.</p>';
+}
+
+function init(){
+  [...new Set(events().map(e=>e.category))].sort().forEach(c=>$('cat').add(new Option(c,c)));
+  $('q').addEventListener('input',render);
+  $('cat').addEventListener('change',render);
+  $('grid').addEventListener('click',ev=>{
+    const b=ev.target.closest('button[data-id]'); if(!b) return;
+    current=events().find(e=>e.id===b.dataset.id);
+    $('dlgEvent').textContent=current.title;
+    $('form').reset(); $('err').textContent=''; $('dlg').showModal(); $('name').focus();
+  });
+  $('cancel').addEventListener('click',()=>$('dlg').close());
+  $('form').addEventListener('submit',ev=>{
+    ev.preventDefault();
+    const name=$('name').value.trim(), roll=$('roll').value.trim(), email=$('email').value.trim().toLowerCase();
+    if(!name||!roll||!/^\S+@\S+\.\S+$/.test(email)){$('err').textContent='Enter your name, roll number and a valid email address.';return}
+    const r=regs();
+    if(r.some(x=>x.eventId===current.id&&x.email===email)){$('err').textContent='This email is already registered for this event.';return}
+    if(r.filter(x=>x.eventId===current.id).length>=current.seats){$('err').textContent='This event is fully booked.';return}
+    r.push({eventId:current.id,name,roll,email,at:new Date().toISOString()});
+    DB.set('regs',r); $('dlg').close(); render(); toast('Registered for '+current.title);
+  });
+  render();
+}
+init();
+</script>
+</body>
+</html>

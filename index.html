@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CampusConnect | College Event Management</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:wght@600;700&family=Public+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--ink:#14213d;--muted:#5b6478;--paper:#f6f8fc;--card:#fff;--line:#dfe4ee;--brand:#2447d8;--brand-d:#1a35a8;--amber:#f2a33a;--ok:#1e8e5a;--bad:#c73e3e;--r:10px}
+*{box-sizing:border-box}
+body{margin:0;font:16px/1.55 "Public Sans",system-ui,sans-serif;color:var(--ink);background:var(--paper)}
+h1,h2,h3{font-family:"Bricolage Grotesque","Public Sans",system-ui,sans-serif;line-height:1.15;margin:0}
+a{color:inherit}
+.wrap{max-width:1080px;margin:0 auto;padding:0 20px}
+header{background:var(--card);border-bottom:1px solid var(--line)}
+.bar{display:flex;align-items:center;justify-content:space-between;height:64px}
+.brand{font:700 20px "Bricolage Grotesque",sans-serif;text-decoration:none}
+nav a{margin-left:20px;text-decoration:none;color:var(--muted);font-weight:500}
+nav a:hover,nav a[aria-current]{color:var(--ink)}
+.btn{display:inline-block;padding:11px 20px;border-radius:var(--r);border:1px solid var(--brand);background:var(--brand);color:#fff;font:600 15px inherit;font-family:inherit;text-decoration:none;cursor:pointer}
+.btn:hover{background:var(--brand-d)}
+.btn.ghost{background:transparent;color:var(--brand)}
+.btn.ghost:hover{background:#eaeefc}
+:focus-visible{outline:3px solid var(--amber);outline-offset:2px}
+.ticket{display:grid;grid-template-columns:84px 1fr;background:var(--card);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.stub{background:var(--ink);color:#fff;text-align:center;padding:16px 6px;border-right:2px dashed var(--amber)}
+.stub b{display:block;font:700 30px/1 "Bricolage Grotesque",sans-serif}
+.stub span{font-size:13px;opacity:.85}
+.body{padding:16px 18px}
+.body h3{font-size:19px;margin-bottom:4px}
+.meta{color:var(--muted);font-size:14px}
+.hero{display:grid;grid-template-columns:1.1fr .9fr;gap:48px;align-items:center;padding:72px 0}
+.hero h1{font-size:clamp(34px,5vw,54px);margin-bottom:16px}
+.hero p{color:var(--muted);max-width:46ch;margin:0 0 28px}
+.hero .btn+.btn{margin-left:10px}
+.next{box-shadow:0 14px 34px rgba(20,33,61,.12);transform:rotate(-1.5deg)}
+.next .stub{padding-top:22px}
+.count{display:inline-block;margin-top:10px;padding:3px 10px;border-radius:99px;background:#fdf1de;color:#8a5a10;font-size:13px;font-weight:600}
+section.list{padding:8px 0 72px}
+section.list h2{font-size:28px;margin-bottom:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:18px}
+footer{border-top:1px solid var(--line);padding:24px 0;color:var(--muted);font-size:14px}
+@media(max-width:760px){.hero{grid-template-columns:1fr;padding:44px 0;gap:32px}.next{transform:none}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap bar">
+    <a class="brand" href="index.html">CampusConnect</a>
+    <nav aria-label="Main"><a href="index.html" aria-current="page">Home</a><a href="user.html">Events</a><a href="admin.html">Admin</a></nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="hero">
+    <div>
+      <h1>Find it. Register. Show up.</h1>
+      <p>Every college event, from hackathons to cultural nights, in one place. Students sign up in seconds and organisers see who is coming.</p>
+      <a class="btn" href="user.html">Browse events</a>
+      <a class="btn ghost" href="admin.html">Organiser login</a>
+    </div>
+    <div id="next" aria-live="polite"></div>
+  </div>
+
+  <section class="list">
+    <h2>Coming up</h2>
+    <div class="grid" id="upcoming"></div>
+  </section>
+</main>
+
+<footer><div class="wrap">&copy; 2026 CampusConnect &ndash; College Event Management System</div></footer>
+
+<script>
+/* ---- Shared data layer (same in index, user, admin) ---- */
+const DB={
+  get(k,d){try{return JSON.parse(localStorage.getItem('cems.'+k))??d}catch{return d}},
+  set(k,v){localStorage.setItem('cems.'+k,JSON.stringify(v))}
+};
+const SEED=[
+  {id:'e1',title:'Tech Fest 2026',date:'2026-11-07',venue:'Main Auditorium',category:'Technical',seats:200,desc:'Hackathon, robotics demos and guest talks.'},
+  {id:'e2',title:'Cultural Night',date:'2026-11-21',venue:'Open Air Theatre',category:'Cultural',seats:500,desc:'Music, dance and drama by student clubs.'},
+  {id:'e3',title:'Inter-College Sports Meet',date:'2026-12-05',venue:'College Ground',category:'Sports',seats:300,desc:'Athletics, cricket and volleyball.'},
+  {id:'e4',title:'Career Fair',date:'2026-12-12',venue:'Seminar Hall',category:'Career',seats:150,desc:'Meet recruiters and attend résumé clinics.'}
+];
+const events=()=>{let e=DB.get('events');if(!e){e=SEED;DB.set('events',e)}return e};
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const parts=d=>{const t=new Date(d+'T00:00');return{m:t.toLocaleString('en-IN',{month:'short'}),d:t.getDate()}};
+const ticket=(e,cls='')=>{const p=parts(e.date);return `<article class="ticket ${cls}">
+  <div class="stub"><b>${p.d}</b><span>${p.m}</span></div>
+  <div class="body"><h3>${esc(e.title)}</h3><div class="meta">${esc(e.venue)} &bull; ${esc(e.category)}</div></div></article>`};
+
+/* ---- Page logic ---- */
+const today=new Date().toISOString().slice(0,10);
+const upcoming=events().filter(e=>e.date>=today).sort((a,b)=>a.date.localeCompare(b.date));
+const nextEl=document.getElementById('next');
+if(upcoming.length){
+  const days=Math.ceil((new Date(upcoming[0].date+'T00:00')-new Date())/864e5);
+  nextEl.innerHTML=ticket(upcoming[0],'next')+`<span class="count">${days<=0?'Happening today':days+' days to go'}</span>`;
+}else nextEl.innerHTML='<p class="meta">No upcoming events yet. Check back soon.</p>';
+document.getElementById('upcoming').innerHTML=upcoming.slice(0,6).map(e=>ticket(e)).join('')||'<p class="meta">Nothing scheduled.</p>';
+</script>
+</body>
+</html>
